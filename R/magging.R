@@ -1,0 +1,99 @@
+#' @name magging
+#' @aliases magging
+#' @title  Maximin Aggregation
+#'
+#' @description  R wrapper for a C++ implementation of the generic
+#' maximin aggregation procedure.
+#'
+#' @usage  magging(B)
+#'
+#' @param B array of size \eqn{p \times G \times m}  containing the group parameter
+#' estimates where; \eqn{p} is the number of model  parameters, \eqn{G} is the
+#' number of groups and \eqn{m} is the number of models fitted for each group.
+#' Note if \code{B} a matrix it is assumed that m = 1.
+
+#' @details Following \cite{buhlmann 2016}  this function computes the maximin aggregation
+#' estimator for given group estimates. This entails solving a convex quadratic
+#' optimization problem. The function is a R/C++ wrapper of an implementation
+#' of the algorithm of Goldfarb and Idnani for the solution of a (convex)
+#' quadratic programming problem by means of a dual method.
+#'
+#' The underlying C++ program eiquadprog.h is licensed under the GNU license and
+#' is a modified version of uQuadProg++  library, working with Eigen linear
+#' algebra template library's data structures.
+#' See http://www.labri.fr/perso/guenneba/code/QuadProg/.
+#' Copyright (2011) Benjamin Stephens and (2010) Gael Guennebaud.
+#'
+#' uQuadProg++ is itself a port made by Angelo Furfaro of QuadProg++ originally
+#' developed by Luca Di Gaspero, working with ublas data structures.
+#' See http://www.diegm.uniud.it/digaspero/index.php?page=software.
+#' Copyright (2008) Angelo Furfaro and (2006) Luca Di Gaspero.
+#'
+#' @return An object with S3 Class "FRESHD".
+#' \item{...}{A \eqn{p\times m} matrix containing the maximin aggregated
+#' parameter estimates for each of the \eqn{m} models.}
+#'
+#' @author  Adam Lund
+#'
+#' Maintainer: Adam Lund, \email{adam.lund@@math.ku.dk}
+#'
+#' @references
+#' B{\"u}hlmann, Peter and Meinshausen, Nicolai. Magging: maximin aggregation for
+#'  inhomogeneous large-scale data. Proceedings of the IEEE 1 2016 104 126--135
+#'
+#' D. Goldfarb, A. Idnani. A numerically stable dual method for solving strictly
+#' convex quadratic programs. Mathematical Programming 27 1983 1-33.
+#'
+#' @examples
+#' ##size of example
+#' set.seed(42)
+#' G <- 20; n <- c(50, 20, 13); p <- c(7, 5, 4)
+#' nlambda <- 10
+#'
+#' ##marginal design matrices (Kronecker components)
+#' x <- list()
+#' for(i in 1:length(n)){x[[i]] <- matrix(rnorm(n[i] * p[i], 0, 1), n[i], p[i])}
+#'
+#' ##common features and effects
+#' common_features <- rbinom(prod(p), 1, 0.1)
+#' common_effects <- rnorm(prod(p), 0, 1) * common_features
+#'system.time({
+#' ##group response and fit
+#' lambda <- exp(seq(-1, -4, length.out = nlambda))
+#' B <- array(NA, c(prod(p), G, nlambda))
+#' y <- array(NA, c(n, G))
+#' for(g in 1:G){
+#' bg <- rnorm(prod(p), 0, .1) * (1 - common_features) + common_effects
+#' Bg <- array(bg, p)
+#' mu <- RH(x[[3]], RH(x[[2]], RH(x[[1]], Bg)))
+#' y[,,, g] <- array(rnorm(prod(n)), dim = n) + mu
+#' B[, g, ] <- glamlasso::glamlasso(x, y[,,, g], lambda = lambda)$coef
+#' }
+#'})
+#'
+#' ##maximin aggregation for all lambdas (models)
+#' system.time(magbeta <- magging(B))
+#'
+#' ##estimated common effects for specific lambda
+#' modelno <- 10
+#' betafit <- magbeta[, modelno]
+#' plot(common_effects, type = "h", ylim = range(betafit, common_effects), col = "red")
+#' lines(betafit, type = "h")
+#'
+#'
+
+magging <- function(B){
+
+if(length(dim(B)) == 3){##
+magB <- array(NA, c(dim(B)[1], dim(B)[3]))
+for(l in 1:dim(B)[3]){
+  magB[, l] <- solveMag(B[, ,l])$out
+  }
+}else if(length(dim(B)) == 2){
+  magB <- solveMag(B)$out
+  }
+
+magB
+
+}
+
