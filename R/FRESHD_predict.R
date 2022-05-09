@@ -40,19 +40,27 @@
 #' }
 #' system.time(fitmm <- maximin(y, "la8", alg = "aradmm", kappa = 0.95))
 #' mmy <- predict(fitmm, "la8")
-#' plot(mmy[, 3], type = "l")
+#' plot(mmy[, 2], type = "l")
 #' lines(sig, col = "red")
 #'
 #' @author Adam Lund
 #' @method predict FRESHD
 #' @export
 predict.FRESHD <- function(object, x, ...){
-    if(is.list(x)){##custom design (non wavelets)
-      if(length(x) != object$dim){stop("length of x must be equal to dimension of model!")}
+    if(is.list(x) || is.matrix(x)){##custom design (non wavelets)
+     
+      #if(length(x) != object$dim){stop("length of x must be equal to dimension of model!")}
+
       if(object$dim == 1){
-        x[[2]] <- matrix(1, 1, 1)
-        x[[3]] <- matrix(1, 1, 1)
-      }else if(object$dim == 2){x[[3]] <- matrix(1, 1, 1)}
+        if(is.matrix(x)){
+          x <- list(x, matrix(1, 1, 1), matrix(1, 1, 1))
+        }else{
+          x <- list(x[[1]], matrix(1, 1, 1), matrix(1, 1, 1))
+        }
+      }else if(object$dim == 2){
+        x <- list(x[[1]], x[[2]], matrix(1, 1, 1))
+      }
+      
       px <- nx <- rep(NA, length(x))
       for( i in 1:length(x)){
         nx[i] = dim(x[[i]])[1]
@@ -62,7 +70,7 @@ predict.FRESHD <- function(object, x, ...){
         stop(paste("column dimensions of new data (", paste(px, collapse = ",") ,") is not equal those of fit (", paste(object$dimcoef, collapse = ",") ,")", sep = ""))
       }
     }else{#wavelet
-      nx<-px <- c(object$dimcoef, rep(1, 3 - length(object$dimcoef)))
+      nx <- px <- c(object$dimcoef, rep(1, 3 - length(object$dimcoef)))
     }
       nlambda <- length(object$lambda)
       res <- array(NA, c(nx, nlambda))

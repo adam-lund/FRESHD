@@ -6,35 +6,29 @@
 \title{Maximin signal estimation}
 \usage{
 maximin(y,
-           x,
-           penalty = "lasso", #ridge should be implemnted
-              alg ="aradmm",
-              kappa = 0.99,
-              nlambda = 30,
-              lambda.min.ratio = 1e-04,
-              lambda = NULL,
-              standardize = TRUE,
-              penalty.factor = NULL,
-              tol = 1e-05,
-              maxiter = 1000,
-              delta = 1,
-              gamma = 1,
-              eta = 0.1,
-              stopcond = "fpr",
-              orthval = 0.2, ##//admm
-              gamma0 = 1.5,#//admm
-              gmh = 1.9,#//admm
-              gmg = 1.1,#//admm
-              minval = 1e-10,#//admm
-              epsiloncor = 0.2,#//admm
-              Tf = 2) #//admm
+        x,
+         penalty = "lasso", 
+           alg ="aradmm",
+           kappa = 0.99,
+           nlambda = 30,
+           lambda_min_ratio = 1e-04,
+           lambda = NULL,
+           penalty_factor = NULL,
+           standardize = TRUE,
+           tol = 1e-05,
+           maxiter = 1000,
+           delta = 1,
+           gamma = 1,
+           eta = 0.1,
+           aux_par = NULL)
 }
 \arguments{
-\item{y}{array of size \eqn{n_1 \times\cdots\times n_d \times G} containing
+\item{y}{Array of size \eqn{n_1 \times\cdots\times n_d \times G} containing
 the response values.}
 
-\item{x}{list containing the Kronecker components (1, 2 or 3) of the Kronecker
-design matrix. These arematrices of sizes \eqn{n_i \times p_i}.}
+\item{x}{Either i) the design matrix, ii) a list containing the Kronecker
+components (2 or 3) if  the design matrix has Kronecker structure or iii) a 
+string indicating the name of the wavelet to use (see {\code{\link{wt}}} for options)}
 
 \item{penalty}{string specifying the penalty type. Possible values are
 \code{"lasso"}.}
@@ -42,56 +36,41 @@ design matrix. These arematrices of sizes \eqn{n_i \times p_i}.}
 \item{alg}{string specifying the optimization algorithm. Possible values are
 \code{"admm", "aradmm", "tos", "tosacc"}.}
 
-\item{kappa}{strictly positive float controllingthe sparsity....}
+\item{kappa}{Strictly positive float controlling the maximum sparsity in the 
+solution. Only used with  ADMM type algorithms. Should be between 0 and 1.}
 
-\item{nlambda}{positive integer giving the number of \code{lambda} values.
+\item{nlambda}{Positive integer giving the number of \code{lambda} values.
 Used when lambda is not specified.}
 
-\item{lambda.min.ratio}{strictly positive float giving the smallest value for
-\code{lambda}, as a fraction of
-\eqn{\lambda_{max}}; the (data dependent) smallest value for which all
-coefficients are zero. Used when lambda is not specified.}
+\item{lambda_min_ratio}{strictly positive float giving the smallest value for
+\code{lambda}, as a fraction of \eqn{\lambda_{max}}; the (data dependent) 
+smallest value for which all coefficients are zero. Used when lambda is not 
+specified.}
 
-\item{lambda}{sequence of strictly positive floats usedas penalty parameters.}
+\item{lambda}{Sequence of strictly positive floats used as penalty parameters.}
 
-\item{standardize}{sboolean.....}
+\item{penalty_factor}{a vector of length \eqn{p} of positive floats that are 
+multiplied with each element in \code{lambda} to allow differential penalization 
+on the coefficients. For tensor models an array of size \eqn{p_1 \times \cdots \times p_d}.}
 
-\item{penalty.factor}{array of size \eqn{p_1 \times \cdots \times p_d} of
-positive floats. Is multiplied with each element in \code{lambda} to allow
-differential penalization on the coefficients.}
+\item{standardize}{Boolean indicating if response \code{y} should be scaled. 
+Default is TRUE to avoid numerical problems.}
 
-\item{tol}{strictly positive float giving the convergence tolerance for the
-inner loop.}
+\item{tol}{Strictly positive float controlling the convergence tolerance.}
 
-\item{maxiter}{positive integer giving the maximum number ofiterations
-allowed for each \code{lambda} value, whensumming over all outer iterations
+\item{maxiter}{Positive integer giving the maximum number of iterations
+allowed for each \code{lambda} value, when summing over all outer iterations
 for said \code{lambda}.}
 
-\item{delta}{..}
+\item{delta}{Positive float controlling the step size for the algorithm.}
 
-\item{gamma}{..}
+\item{gamma}{Positive float controlling the relaxation parameter for the 
+algorithm. Should be between 0 and 2.}
 
-\item{eta}{..}
+\item{eta}{Scaling parameter for the step size in the accelerated TOS algorithm. 
+Should be between 0 and 1.}
 
-\item{stopcond}{stopping condition for TOS...}
-
-\item{orthval}{strictly positive float giving the maximum number of....}
-
-\item{gamma0}{strictly positive float used in the ARADAM algorithm. Default
-is \code{.. = ..}.}
-
-\item{gmh}{strictly positive float used to control the ... for ARADAM Default
-is \code{.. = ..}.}
-
-\item{gmg}{positive integer giving the look back for the ARADMM Default is
-\code{M = 4}.}
-
-\item{minval}{strictly positive float used to control...}
-
-\item{epsiloncor}{non-negative float used by the ARADMM algorithm to control
-...}
-
-\item{Tf}{...}
+\item{aux_par}{Auxiliary parameters for the algorithm.}
 }
 \value{
 An object with S3 Class "FRESHD".
@@ -104,23 +83,18 @@ estimation procedure.}
 \item{dimcoef}{A vector giving the dimension of the model coefficient array
 \eqn{\beta}.}
 \item{dimobs}{A vector giving the dimension of the observation (response) array \code{Y}.}
-\item{dim}{A string indicating the wavelet name if used.}
+\item{dim}{Integer indicating the dimension of of the array model. Equal to 1
+for non array.}
 \item{wf}{A string indicating the wavelet name if used.}
-\item{diagnostics}{A list of length 3. Item \code{iter} is a \code{length(zeta)}-list
-of vectors containing  the number of   iterations for each \code{lambda} value
-for which the algorithm converged. Item \code{bt_iter}  is a  \code{length(zeta)}
-vector with total number of backtracking steps performed across all (converged)
-\code{lambda} values for given  \code{zeta} value. Key \code{bt_enter} is a
-\code{length(zeta)} vector with  total number of times backtracking is initiated
-across all (converged)  \code{lambda} values for given \code{zeta} value.}
-\item{endmod}{Vector of length \code{length(zeta)} with the number of
-models fitted for each \code{zeta}.}
-\item{Stops}{Convergence indicators.}
+\item{diagnostics}{A list where item \code{iter} is a vector containing  the 
+number of iterations for each \code{lambda} value for which the algorithm 
+converged. Item \code{stop_maxiter} is 1 if maximum iterations is reached 
+otherwise zero. Item \code{stop_sparse} is 1 if  maximum sparsity is reached 
+otherwise zero.}
 }
 \description{
-Efficient design matrix free procedure for solving the maximin
-problem for large scale models with identical design across groups,
-see (Lund, 2022).
+Efficient procedure for solving the maximin estimation problem 
+with identical design across groups, see (Lund, 2022).
 }
 \details{
 For \eqn{n} heterogeneous data points divided into \eqn{G} equal sized
@@ -134,7 +108,7 @@ the maximin optimization problem
 \deqn{\min_{\beta} -\hat V_g(\beta)) + \lambda\Vert\beta\Vert_1,\lambda \ge 0}
 where
 \deqn{\hat V_g(\beta):=\frac{1}{n}(2\beta^\top X^\top y_g - \beta^\top X^\top X\beta),}
-is the empirical explained variance in group \eqn{g}. See \cite{Lund et al., 2022}
+is the empirical explained variance in group \eqn{g}. See \cite{Lund, 2022}
 for more details and references.
 
 The package solves the problem using different algorithms depending on \eqn{X}:
@@ -143,10 +117,10 @@ i) If \eqn{X} is orthogonal (e.g. the inverse wavelet transform) either
 a standard ADMM algorithm with step size fixed at 1 or an adaptive relaxed
 ADMM (ARADMM) with auto tuned step size is used, see Xu et al (2017).
 
-ii) For \eqn{d\in\{1, 2,3\}}  and a  tensor structured design matrix
-\eqn{X = \bigotimes_{i=1}^d X_i},  a three operator splitting (TOS) algorithm
-is implemented, see Damek and Yin (2017). The case \eqn{d = 1} corresponds to a
-general design without any structure (Kronecker, orthogonal or otherwise).
+ii) For general \eqn{X}, a three operator splitting (TOS) algorithm
+is implemented, see Damek and Yin (2017). Note if  the design is 
+tensor structured, \eqn{X = \bigotimes_{i=1}^d X_i} for \eqn{d\in\{1, 2,3\}}, 
+the procedure  accepts a list of the tensor components.
 }
 \examples{
 ## general 3d tensor design matrix
@@ -175,7 +149,7 @@ y[,,, g] <- array(rnorm(prod(n), 0, var(mu)), dim = n) + mu
 system.time(fit <- maximin(y, x, penalty = "lasso", alg = "tosacc"))
 
 ##estimated common effects for specific lambda
-modelno <- 4
+modelno <- 10
 betafit <- fit$coef[, modelno]
 plot(common_effects, type = "h", ylim = range(betafit, common_effects), col = "red")
 lines(betafit, type = "h")

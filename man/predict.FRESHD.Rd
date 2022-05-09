@@ -52,7 +52,7 @@ y[, i] <- y[, i] + amp * sin(freqs[j] * pi * z + runif(1, -pi, pi))
 }
 system.time(fitmm <- maximin(y, "la8", alg = "aradmm", kappa = 0.95))
 mmy <- predict(fitmm, "la8")
-plot(mmy[, 3], type = "l")
+plot(mmy[, 2], type = "l")
 lines(sig, col = "red")
 
 }

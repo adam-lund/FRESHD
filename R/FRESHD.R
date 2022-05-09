@@ -2,74 +2,60 @@
 #' @aliases FRESHD
 #' @title Maximin signal estimation
 #'
-#' @description Efficient design matrix free procedure for solving the maximin
-#' problem for large scale models with identical design across groups,
-#' see (Lund, 2022).
+#' @description Efficient procedure for solving the maximin estimation problem 
+#' with identical design across groups, see (Lund, 2022).
 #'
 #' @usage maximin(y,
-#'            x,
-#'            penalty = "lasso", #ridge should be implemnted
-#'               alg ="aradmm",
-#'               kappa = 0.99,
-#'               nlambda = 30,
-#'               lambda.min.ratio = 1e-04,
-#'               lambda = NULL,
-#'               standardize = TRUE,
-#'               penalty.factor = NULL,
-#'               tol = 1e-05,
-#'               maxiter = 1000,
-#'               delta = 1,
-#'               gamma = 1,
-#'               eta = 0.1,
-#'               stopcond = "fpr",
-#'               orthval = 0.2, ##//admm
-#'               gamma0 = 1.5,#//admm
-#'               gmh = 1.9,#//admm
-#'               gmg = 1.1,#//admm
-#'               minval = 1e-10,#//admm
-#'               epsiloncor = 0.2,#//admm
-#'               Tf = 2) #//admm
+#'         x,
+#'          penalty = "lasso", 
+#'            alg ="aradmm",
+#'            kappa = 0.99,
+#'            nlambda = 30,
+#'            lambda_min_ratio = 1e-04,
+#'            lambda = NULL,
+#'            penalty_factor = NULL,
+#'            standardize = TRUE,
+#'            tol = 1e-05,
+#'            maxiter = 1000,
+#'            delta = 1,
+#'            gamma = 1,
+#'            eta = 0.1,
+#'            aux_par = NULL)
 #'
-#' @param y array of size \eqn{n_1 \times\cdots\times n_d \times G} containing
+#' @param y Array of size \eqn{n_1 \times\cdots\times n_d \times G} containing
 #' the response values.
-#' @param x list containing the Kronecker components (1, 2 or 3) of the Kronecker
-#' design matrix. These arematrices of sizes \eqn{n_i \times p_i}.
+#' @param x Either i) the design matrix, ii) a list containing the Kronecker
+#' components (2 or 3) if  the design matrix has Kronecker structure or iii) a 
+#' string indicating the name of the wavelet to use (see {\code{\link{wt}}} for options)
 #' @param penalty string specifying the penalty type. Possible values are
 #' \code{"lasso"}.
 #' @param alg string specifying the optimization algorithm. Possible values are
 #' \code{"admm", "aradmm", "tos", "tosacc"}.
-#' @param kappa strictly positive float controllingthe sparsity....
-#' @param nlambda positive integer giving the number of \code{lambda} values.
+#' @param kappa Strictly positive float controlling the maximum sparsity in the 
+#' solution. Only used with  ADMM type algorithms. Should be between 0 and 1.
+#' @param nlambda Positive integer giving the number of \code{lambda} values.
 #' Used when lambda is not specified.
-#' @param lambda.min.ratio strictly positive float giving the smallest value for
-#'\code{lambda}, as a fraction of
-#' \eqn{\lambda_{max}}; the (data dependent) smallest value for which all
-#' coefficients are zero. Used when lambda is not specified.
-#' @param lambda sequence of strictly positive floats usedas penalty parameters.
-#' @param standardize sboolean.....
-#' @param penalty.factor array of size \eqn{p_1 \times \cdots \times p_d} of
-#' positive floats. Is multiplied with each element in \code{lambda} to allow
-#' differential penalization on the coefficients.
-#' @param tol strictly positive float giving the convergence tolerance for the
-#' inner loop.
-#' @param maxiter positive integer giving the maximum number ofiterations
-#' allowed for each \code{lambda} value, whensumming over all outer iterations
+#' @param lambda_min_ratio strictly positive float giving the smallest value for
+#'\code{lambda}, as a fraction of \eqn{\lambda_{max}}; the (data dependent) 
+#' smallest value for which all coefficients are zero. Used when lambda is not 
+#' specified.
+#' @param lambda Sequence of strictly positive floats used as penalty parameters.
+#' @param penalty_factor a vector of length \eqn{p} of positive floats that are 
+#' multiplied with each element in \code{lambda} to allow differential penalization 
+#' on the coefficients. For tensor models an array of size \eqn{p_1 \times \cdots \times p_d}.
+#' @param standardize Boolean indicating if response \code{y} should be scaled. 
+#' Default is TRUE to avoid numerical problems. 
+#' @param tol Strictly positive float controlling the convergence tolerance.
+#' @param maxiter Positive integer giving the maximum number of iterations
+#' allowed for each \code{lambda} value, when summing over all outer iterations
 #' for said \code{lambda}.
-#' @param delta ..
-#' @param gamma ..
-#' @param eta ..
-#' @param stopcond stopping condition for TOS...
-#' @param orthval strictly positive float giving the maximum number of....
-#' @param gamma0 strictly positive float used in the ARADAM algorithm. Default
-#' is \code{.. = ..}.
-#' @param gmh strictly positive float used to control the ... for ARADAM Default
-#' is \code{.. = ..}.
-#' @param gmg positive integer giving the look back for the ARADMM Default is
-#' \code{M = 4}.
-#' @param minval strictly positive float used to control...
-#' @param epsiloncor non-negative float used by the ARADMM algorithm to control
-#' ...
-#' @param Tf ...
+#' @param delta Positive float controlling the step size for the algorithm.
+#' @param gamma Positive float controlling the relaxation parameter for the 
+#' algorithm. Should be between 0 and 2.
+#' @param eta Scaling parameter for the step size in the accelerated TOS algorithm. 
+#' Should be between 0 and 1.
+#' @param aux_par Auxiliary parameters for the algorithm. 
+#' 
 #' @details For \eqn{n} heterogeneous data points divided into \eqn{G} equal sized
 #' groups with \eqn{m<n} data points in each, let \eqn{y_g=(y_{g,1},\ldots,y_{g,m})}
 #' denote the vector  of observations in group \eqn{g}. For a \eqn{m\times p}
@@ -81,7 +67,7 @@
 #' \deqn{\min_{\beta} -\hat V_g(\beta)) + \lambda\Vert\beta\Vert_1,\lambda \ge 0}
 #' where
 #' \deqn{\hat V_g(\beta):=\frac{1}{n}(2\beta^\top X^\top y_g - \beta^\top X^\top X\beta),}
-#' is the empirical explained variance in group \eqn{g}. See \cite{Lund et al., 2022}
+#' is the empirical explained variance in group \eqn{g}. See \cite{Lund, 2022}
 #' for more details and references.
 #'
 #' The package solves the problem using different algorithms depending on \eqn{X}:
@@ -90,11 +76,11 @@
 #' a standard ADMM algorithm with step size fixed at 1 or an adaptive relaxed
 #' ADMM (ARADMM) with auto tuned step size is used, see Xu et al (2017).
 #'
-#' ii) For \eqn{d\in\{1, 2,3\}}  and a  tensor structured design matrix
-#' \eqn{X = \bigotimes_{i=1}^d X_i},  a three operator splitting (TOS) algorithm
-#' is implemented, see Damek and Yin (2017). The case \eqn{d = 1} corresponds to a
-#' general design without any structure (Kronecker, orthogonal or otherwise).
-#'
+#' ii) For general \eqn{X}, a three operator splitting (TOS) algorithm
+#' is implemented, see Damek and Yin (2017). Note if  the design is 
+#' tensor structured, \eqn{X = \bigotimes_{i=1}^d X_i} for \eqn{d\in\{1, 2,3\}}, 
+#' the procedure  accepts a list of the tensor components.
+#' 
 #' @return An object with S3 Class "FRESHD".
 #' \item{spec}{A string indicating the array dimension (1, 2 or 3) and the penalty.}
 #' \item{coef}{A \eqn{p_1\cdots p_d \times} \code{nlambda} matrix containing the
@@ -106,18 +92,17 @@
 #' \item{dimcoef}{A vector giving the dimension of the model coefficient array
 #' \eqn{\beta}.}
 #' \item{dimobs}{A vector giving the dimension of the observation (response) array \code{Y}.}
-#' \item{dim}{A string indicating the wavelet name if used.}
+#' \item{dim}{Integer indicating the dimension of of the array model. Equal to 1
+#' for non array.}
 #' \item{wf}{A string indicating the wavelet name if used.}
-#' \item{diagnostics}{A list of length 3. Item \code{iter} is a \code{length(zeta)}-list
-#' of vectors containing  the number of   iterations for each \code{lambda} value
-#' for which the algorithm converged. Item \code{bt_iter}  is a  \code{length(zeta)}
-#' vector with total number of backtracking steps performed across all (converged)
-#' \code{lambda} values for given  \code{zeta} value. Key \code{bt_enter} is a
-#' \code{length(zeta)} vector with  total number of times backtracking is initiated
-#' across all (converged)  \code{lambda} values for given \code{zeta} value.}
-#' \item{endmod}{Vector of length \code{length(zeta)} with the number of
-#' models fitted for each \code{zeta}.}
-#' \item{Stops}{Convergence indicators.}
+#' \item{diagnostics}{A list where item \code{iter} is a vector containing  the 
+#' number of iterations for each \code{lambda} value for which the algorithm 
+#' converged. Item \code{stop_maxiter} is 1 if maximum iterations is reached 
+#' otherwise zero. Item \code{stop_sparse} is 1 if  maximum sparsity is reached 
+#' otherwise zero.}
+# \item{endmod}{Vector of length \code{length(zeta)} with the number of
+# models fitted for each \code{zeta}.}
+#' 
 #'
 #' @author Adam Lund
 #'
@@ -168,7 +153,7 @@
 #' system.time(fit <- maximin(y, x, penalty = "lasso", alg = "tosacc"))
 #'
 #' ##estimated common effects for specific lambda
-#' modelno <- 4
+#' modelno <- 10
 #' betafit <- fit$coef[, modelno]
 #' plot(common_effects, type = "h", ylim = range(betafit, common_effects), col = "red")
 #' lines(betafit, type = "h")
@@ -218,29 +203,30 @@ maximin <-function(y,
                    alg ="aradmm",
                    kappa = 0.99,
                    nlambda = 30,
-                   lambda.min.ratio = 1e-04,
+                   lambda_min_ratio = 1e-04,
                    lambda = NULL,
+                   penalty_factor = NULL,
                    standardize = TRUE,
-                   penalty.factor = NULL,
                    tol = 1e-05,
                    maxiter = 1000,
                    delta = 1,
                    gamma = 1,
                    eta = 0.1,
-                   stopcond = "fpr",
-                   orthval = 0.2,
-                   gamma0 = 1.5,
-                   gmh = 1.9,
-                   gmg = 1.1,
-                   minval = 1e-10,
-                   epsiloncor = 0.2,
-                   Tf = 2
-                   ){
+                   aux_par = NULL){
+  
+default_aux_par = list("stopcond" = "fpr", "orthval" = 0.2, "gamma0" = 1.5,
+                       "gmh" = 1.9, "gmg" = 1.1, "minval" = 1e-10, "epsiloncor" = 0.2,
+                       "Tf" = 2)
+for(k in names(default_aux_par)){
+if(is.null(aux_par[[k]])){
+aux_par[[k]] = default_aux_par[[k]]
+}
+}
 
 #todo: need algo design consistency check
-  if(!(alg %in% c("admm", "aradmm", "tos" , "tosacc"))){
-    stop(paste("algorithm must be correctly specified"))
-  }
+if(!(alg %in% c("admm", "aradmm", "tos" , "tosacc"))){
+stop(paste("algorithm must be correctly specified"))
+}
 
 tauk = 1 / delta
 gamk = gamma
@@ -256,7 +242,7 @@ dimdata <- length(dim(y)) - 1
 if (dimdata > 3){
   stop(paste("the dimension of the model must be 1, 2 or 3!"))
   }
-
+  
 G <- dim(y)[dimdata + 1]
 if(is.character(x)){# wavelet
 
@@ -292,23 +278,26 @@ J  <- log(min(p1, p2, p3), 2)
 }
 p <- n <- n1 * n2 * n3
 
-x[[1]] <- matrix(n1, 1, 1)
-x[[2]] <- matrix(n2, 1, 1)
-x[[3]] <- matrix(n3, 1, 1)
+x[[1]] <- matrix(n1, 1, 1)#not used
+x[[2]] <- matrix(n2, 1, 1)#not used
+x[[3]] <- matrix(n3, 1, 1)#not used
 
-dims = matrix(c(n1, n2, n3, p1, p2, p3), 3,2)
+dims = matrix(c(n1, n2, n3, p1, p2, p3), 3, 2)
 
 }else{#general/custom design
 
 if(alg %in% c("admm", "aradmm")){
 warning(paste("alg =", alg, "and x is not know to be orthognal. The", alg,  "algorithm has unknown behavior if the design x is not orthogonal"))
 }
-
-if (dimdata == 1){
-x[[2]] <- matrix(1, 1, 1)
-x[[3]] <- matrix(1, 1, 1)
-}else if (dimdata == 2){
-x[[3]] <- matrix(1, 1, 1)
+    
+if(dimdata == 1){
+if(is.matrix(x)){
+x <- list(x, matrix(1, 1, 1), matrix(1, 1, 1))
+}else{
+x <- list(x[[1]], matrix(1, 1, 1), matrix(1, 1, 1))
+}
+}else if(dimdata == 2){
+x <- list(x[[1]], x[[2]], matrix(1, 1, 1))
 }
 dims <- rbind(dim(x[[1]]), dim(x[[2]]), dim(x[[3]]))
 n1 <- dims[1, 1]
@@ -321,8 +310,7 @@ n <- prod(dims[,1])
 p <- prod(dims[,2])
 
 }
-#dim(y) <- c(n1, n2 * n3, G)
-y<-array(y, c(n1, n2 * n3, G))
+y <- array(y, c(n1, n2 * n3, G))
 if(is.null(lambda)){
 
 makelamb <- 1
@@ -334,21 +322,21 @@ makelamb <- 0
 
 }
 
-if(is.null(penalty.factor)){
+if(is.null(penalty_factor)){
 
-penalty.factor <- matrix(1, p1, p2 * p3)
+penalty_factor <- matrix(1, p1, p2 * p3)
 
-}else if(prod(dim(penalty.factor)) != p){
+}else if(prod(dim(penalty_factor)) != p){
 
 stop(
-paste("number of elements in penalty.factor (", length(penalty.factor),") is not equal to the number of coefficients (", p,")", sep = "")
+paste("number of elements in penalty_factor (", length(penalty_factor),") is not equal to the number of coefficients (", p,")", sep = "")
 )
 
 }else {
 
-if(min(penalty.factor) < 0){stop(paste("penalty.factor must be positive"))}
+if(min(penalty_factor) < 0){stop(paste("penalty_factor must be positive"))}
 
-penalty.factor <- matrix(penalty.factor, p1, p2 * p3)
+penalty_factor <- matrix(penalty_factor, p1, p2 * p3)
 
 }
 
@@ -358,18 +346,18 @@ res <- solveMMP(dims,
                 penalty,
                 kappa,
                 lambda,
-                nlambda, makelamb, lambda.min.ratio, penalty.factor,
+                nlambda, makelamb, lambda_min_ratio, penalty_factor,
                 tol,
                 maxiter,
                 alg,
-                stopcond,#tos
-                orthval,
-                gamma0,
-                gmh,
-                gmg,
-                minval,
-                epsiloncor,
-                Tf,
+                aux_par$"stopcond",#tos
+                aux_par$"orthval",
+                aux_par$"gamma0",
+                aux_par$"gmh",
+                aux_par$"gmg",
+                aux_par$"minval",
+                aux_par$"epsiloncor",
+                aux_par$"Tf",
                 wf,
                 J,
                 dimdata,
@@ -391,7 +379,11 @@ maxiterreached," time(s) out of ", maxiterpossible," possible"))
 }
 endmodelno <- res$endmodelno + 0#converged models since c++ is zero indexed
 
-if(alg %in% c("admm", "aradmm")){modelseq <- endmodelno:1}else{modelseq <- 1:endmodelno}
+if(alg %in% c("admm", "aradmm")){
+  modelseq <- endmodelno:1
+}else{
+    modelseq <- 1:endmodelno
+    }
 out <- list()
 class(out) <- "FRESHD"
 out$spec <- paste("", dimdata,"-dimensional ", penalty," penalized model")
@@ -404,10 +396,10 @@ out$dimobs <- c(n1, n2, n3)[1:dimdata]
 out$dim = dimdata
 out$wf = wf
 out$endmod <- endmodelno
-out$diagnostics <- list(iter = Iter[modelseq], stops = res$Stops,
-                        stop_sparse = res$stopsparse)
-out$tauk <- res$tauk
-out$gammak <- res$gamk
+out$diagnostics <- list(iter = Iter[modelseq], stop_maxiter = res$Stops[1],
+                        stop_sparse = res$Stops[2])
+#out$tauk <- res$tauk
+#out$gammak <- res$gamk
 #out$PhitY<-res$PhitY
 return(out)
 

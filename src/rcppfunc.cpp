@@ -48,7 +48,7 @@ if(wf != "not used"){
 int endmodelno = nlambda, //n1 = dims(0,0),
     n2 = dims(1,0), n3 = dims(2, 0),
   Nog = Y.n_slices, p1 = dims(0, 1), p2 = dims(1, 1), p3 = dims(2, 1), p = p1 * p2 * p3,
-  stopsparse = 0, stopconv = 0, stopmaxiter = 0
+  stopsparse = 0, stopmaxiter = 0
 ;
 
 double delta,
@@ -278,7 +278,6 @@ Iter(m) = k + 1;
 if(stopcond == "fpr"){
 fpr(m, k) = (1 / delta) * ip(Xf - Xg, Xf - Xg) / (1 + ip(Z, Z));
 if(fpr(m, k) < tol and k > 1 ){
-  stopconv = 1;
   break;}
 }
 if(stopcond == "obj"){//todo not in use!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -304,7 +303,7 @@ Xs.col(m) = res;
 sparsity = accu(res == 0) ;
 df(m) = p - sparsity;
 
-if(Iter(m) > maxiter - 1){
+if(Iter(m) > maxiter - 1){//end as last lambda didnt converge
   stopmaxiter = 1;
   break;}
 if(alg == "aradmm" || alg == "admm"
@@ -317,9 +316,8 @@ if(alg == "aradmm" || alg == "admm"
 
 }//end lambda loop
 
-Stops(0) = stopconv;
+Stops(0) = stopmaxiter;
 Stops(1) = stopsparse;
-Stops(2) = stopmaxiter;
 output = Rcpp::List::create(Rcpp::Named("coefs") = Xs,
                             Rcpp::Named("df") = df,
                             Rcpp::Named("PhitY") = PhitY,

@@ -7,22 +7,20 @@
 magging(B)
 }
 \arguments{
-\item{B}{array of size \eqn{p \times G \times m}  containing the group parameter
-estimates where; \eqn{p} is the number of model  parameters, \eqn{G} is the
-number of groups and \eqn{m} is the number of models fitted for each group.
-Note if \code{B} a matrix it is assumed that m = 1.}
+\item{B}{array of size \eqn{p \times G } containing the group parameter
+estimates where \eqn{p} is the number of model  parameters and \eqn{G} is the
+number of groups.}
 }
 \value{
 An object with S3 Class "FRESHD".
-\item{...}{A \eqn{p\times m} matrix containing the maximin aggregated
-parameter estimates for each of the \eqn{m} models.}
+\item{...}{A \eqn{p} vector containing the maximin aggregated parameter estimates.}
 }
 \description{
 R wrapper for a C++ implementation of the generic
 maximin aggregation procedure.
 }
 \details{
-Following \cite{buhlmann 2016}  this function computes the maximin aggregation
+Following \cite{Buhlmann 2016}  this function computes the maximin aggregation
 estimator for given group estimates. This entails solving a convex quadratic
 optimization problem. The function is a R/C++ wrapper of an implementation
 of the algorithm of Goldfarb and Idnani for the solution of a (convex)
@@ -42,12 +40,14 @@ Copyright (2008) Angelo Furfaro and (2006) Luca Di Gaspero.
 \examples{
 ##size of example
 set.seed(42)
-G <- 20; n <- c(50, 20, 13); p <- c(7, 5, 4)
+G <- 15; n <- c(50, 20, 13); p <- c(7, 5, 4)
 nlambda <- 10
 
 ##marginal design matrices (Kronecker components)
 x <- list()
-for(i in 1:length(n)){x[[i]] <- matrix(rnorm(n[i] * p[i], 0, 1), n[i], p[i])}
+for(i in 1:length(n)){
+x[[i]] <- matrix(rnorm(n[i] * p[i], 0, 1), n[i], p[i])
+}
 
 ##common features and effects
 common_features <- rbinom(prod(p), 1, 0.1)
@@ -55,10 +55,11 @@ common_effects <- rnorm(prod(p), 0, 1) * common_features
 system.time({
 ##group response and fit
 lambda <- exp(seq(-1, -4, length.out = nlambda))
+magbeta <- matrix(0, prod(p), nlambda)
 B <- array(NA, c(prod(p), G, nlambda))
 y <- array(NA, c(n, G))
 for(g in 1:G){
-bg <- rnorm(prod(p), 0, .1) * (1 - common_features) + common_effects
+bg <- rnorm(prod(p), 0, 0.1) * (1 - common_features) + common_effects
 Bg <- array(bg, p)
 mu <- RH(x[[3]], RH(x[[2]], RH(x[[1]], Bg)))
 y[,,, g] <- array(rnorm(prod(n)), dim = n) + mu
@@ -67,14 +68,15 @@ B[, g, ] <- glamlasso::glamlasso(x, y[,,, g], lambda = lambda)$coef
 })
 
 ##maximin aggregation for all lambdas (models)
-system.time(magbeta <- magging(B))
+for(l in 1:dim(B)[3]){
+magbeta[, l] <- magging(B[, , l])
+}
 
 ##estimated common effects for specific lambda
 modelno <- 10
 betafit <- magbeta[, modelno]
 plot(common_effects, type = "h", ylim = range(betafit, common_effects), col = "red")
 lines(betafit, type = "h")
-
 
 }
 \references{
