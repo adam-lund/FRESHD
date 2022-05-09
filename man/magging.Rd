@@ -22,8 +22,8 @@ maximin aggregation procedure.
 \details{
 Following \cite{Buhlmann 2016}  this function computes the maximin aggregation
 estimator for given group estimates. This entails solving a convex quadratic
-optimization problem. The function is a R/C++ wrapper of an implementation
-of the algorithm of Goldfarb and Idnani for the solution of a (convex)
+optimization problem. The function is a R/C++ wraps an implementation
+of the algorithm by Goldfarb and Idnani for solving a (convex)
 quadratic programming problem by means of a dual method.
 
 The underlying C++ program eiquadprog.h is licensed under the GNU license and
@@ -80,11 +80,11 @@ lines(betafit, type = "h")
 
 }
 \references{
-B{\"u}hlmann, Peter and Meinshausen, Nicolai. Magging: maximin aggregation for
- inhomogeneous large-scale data. Proceedings of the IEEE 1 2016 104 126--135
+Buhlmann, Peter and Meinshausen, Nicolai (2016). Magging: maximin aggregation for
+ inhomogeneous large-scale data. Proceedings of the IEEE, 1, 104, 126-135
 
 D. Goldfarb, A. Idnani. A numerically stable dual method for solving strictly
-convex quadratic programs. Mathematical Programming 27 1983 1-33.
+convex quadratic programs (1983). Mathematical Programming, 27,  1-33.
 }
 \author{
 Adam Lund

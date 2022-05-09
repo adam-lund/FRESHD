@@ -7,20 +7,20 @@
 \usage{
 maximin(y,
         x,
-         penalty = "lasso", 
-           alg ="aradmm",
-           kappa = 0.99,
-           nlambda = 30,
-           lambda_min_ratio = 1e-04,
-           lambda = NULL,
-           penalty_factor = NULL,
-           standardize = TRUE,
-           tol = 1e-05,
-           maxiter = 1000,
-           delta = 1,
-           gamma = 1,
-           eta = 0.1,
-           aux_par = NULL)
+        penalty = "lasso", 
+        alg ="aradmm",
+        kappa = 0.99,
+        nlambda = 30,
+        lambda_min_ratio = 1e-04,
+        lambda = NULL,
+        penalty_factor = NULL,
+        standardize = TRUE,
+        tol = 1e-05,
+        maxiter = 1000,
+        delta = 1,
+        gamma = 1,
+        eta = 0.1,
+        aux_par = NULL)
 }
 \arguments{
 \item{y}{Array of size \eqn{n_1 \times\cdots\times n_d \times G} containing
@@ -49,7 +49,7 @@ specified.}
 
 \item{lambda}{Sequence of strictly positive floats used as penalty parameters.}
 
-\item{penalty_factor}{a vector of length \eqn{p} of positive floats that are 
+\item{penalty_factor}{A vector of length \eqn{p} containing positive floats that are 
 multiplied with each element in \code{lambda} to allow differential penalization 
 on the coefficients. For tensor models an array of size \eqn{p_1 \times \cdots \times p_d}.}
 
@@ -59,8 +59,7 @@ Default is TRUE to avoid numerical problems.}
 \item{tol}{Strictly positive float controlling the convergence tolerance.}
 
 \item{maxiter}{Positive integer giving the maximum number of iterations
-allowed for each \code{lambda} value, when summing over all outer iterations
-for said \code{lambda}.}
+allowed for each \code{lambda} value.}
 
 \item{delta}{Positive float controlling the step size for the algorithm.}
 
@@ -70,7 +69,7 @@ algorithm. Should be between 0 and 2.}
 \item{eta}{Scaling parameter for the step size in the accelerated TOS algorithm. 
 Should be between 0 and 1.}
 
-\item{aux_par}{Auxiliary parameters for the algorithm.}
+\item{aux_par}{Auxiliary parameters for the algorithms.}
 }
 \value{
 An object with S3 Class "FRESHD".
@@ -114,13 +113,13 @@ for more details and references.
 The package solves the problem using different algorithms depending on \eqn{X}:
 
 i) If \eqn{X} is orthogonal (e.g. the inverse wavelet transform) either
-a standard ADMM algorithm with step size fixed at 1 or an adaptive relaxed
+an ADMM algorithm (standard or relaxed) or an adaptive relaxed
 ADMM (ARADMM) with auto tuned step size is used, see Xu et al (2017).
 
 ii) For general \eqn{X}, a three operator splitting (TOS) algorithm
 is implemented, see Damek and Yin (2017). Note if  the design is 
 tensor structured, \eqn{X = \bigotimes_{i=1}^d X_i} for \eqn{d\in\{1, 2,3\}}, 
-the procedure  accepts a list of the tensor components.
+the procedure  accepts a list containnig the tensor components (matrices).
 }
 \examples{
 ## general 3d tensor design matrix

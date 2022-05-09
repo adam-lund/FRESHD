@@ -7,20 +7,20 @@
 #'
 #' @usage maximin(y,
 #'         x,
-#'          penalty = "lasso", 
-#'            alg ="aradmm",
-#'            kappa = 0.99,
-#'            nlambda = 30,
-#'            lambda_min_ratio = 1e-04,
-#'            lambda = NULL,
-#'            penalty_factor = NULL,
-#'            standardize = TRUE,
-#'            tol = 1e-05,
-#'            maxiter = 1000,
-#'            delta = 1,
-#'            gamma = 1,
-#'            eta = 0.1,
-#'            aux_par = NULL)
+#'         penalty = "lasso", 
+#'         alg ="aradmm",
+#'         kappa = 0.99,
+#'         nlambda = 30,
+#'         lambda_min_ratio = 1e-04,
+#'         lambda = NULL,
+#'         penalty_factor = NULL,
+#'         standardize = TRUE,
+#'         tol = 1e-05,
+#'         maxiter = 1000,
+#'         delta = 1,
+#'         gamma = 1,
+#'         eta = 0.1,
+#'         aux_par = NULL)
 #'
 #' @param y Array of size \eqn{n_1 \times\cdots\times n_d \times G} containing
 #' the response values.
@@ -40,21 +40,20 @@
 #' smallest value for which all coefficients are zero. Used when lambda is not 
 #' specified.
 #' @param lambda Sequence of strictly positive floats used as penalty parameters.
-#' @param penalty_factor a vector of length \eqn{p} of positive floats that are 
+#' @param penalty_factor A vector of length \eqn{p} containing positive floats that are 
 #' multiplied with each element in \code{lambda} to allow differential penalization 
 #' on the coefficients. For tensor models an array of size \eqn{p_1 \times \cdots \times p_d}.
 #' @param standardize Boolean indicating if response \code{y} should be scaled. 
 #' Default is TRUE to avoid numerical problems. 
 #' @param tol Strictly positive float controlling the convergence tolerance.
 #' @param maxiter Positive integer giving the maximum number of iterations
-#' allowed for each \code{lambda} value, when summing over all outer iterations
-#' for said \code{lambda}.
+#' allowed for each \code{lambda} value.
 #' @param delta Positive float controlling the step size for the algorithm.
 #' @param gamma Positive float controlling the relaxation parameter for the 
 #' algorithm. Should be between 0 and 2.
 #' @param eta Scaling parameter for the step size in the accelerated TOS algorithm. 
 #' Should be between 0 and 1.
-#' @param aux_par Auxiliary parameters for the algorithm. 
+#' @param aux_par Auxiliary parameters for the algorithms. 
 #' 
 #' @details For \eqn{n} heterogeneous data points divided into \eqn{G} equal sized
 #' groups with \eqn{m<n} data points in each, let \eqn{y_g=(y_{g,1},\ldots,y_{g,m})}
@@ -73,13 +72,13 @@
 #' The package solves the problem using different algorithms depending on \eqn{X}:
 #'
 #' i) If \eqn{X} is orthogonal (e.g. the inverse wavelet transform) either
-#' a standard ADMM algorithm with step size fixed at 1 or an adaptive relaxed
+#' an ADMM algorithm (standard or relaxed) or an adaptive relaxed
 #' ADMM (ARADMM) with auto tuned step size is used, see Xu et al (2017).
 #'
 #' ii) For general \eqn{X}, a three operator splitting (TOS) algorithm
 #' is implemented, see Damek and Yin (2017). Note if  the design is 
 #' tensor structured, \eqn{X = \bigotimes_{i=1}^d X_i} for \eqn{d\in\{1, 2,3\}}, 
-#' the procedure  accepts a list of the tensor components.
+#' the procedure  accepts a list containnig the tensor components (matrices).
 #' 
 #' @return An object with S3 Class "FRESHD".
 #' \item{spec}{A string indicating the array dimension (1, 2 or 3) and the penalty.}

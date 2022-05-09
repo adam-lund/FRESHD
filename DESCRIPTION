@@ -1,12 +1,12 @@
 Package: FRESHD
 Type: Package
 Title: Fast Robust Extraction of Signals from Heterogenous Data
-Version: 0.1
-Date: 2022-04-23
+Version: 1.0
+Date: 2022-05-09
 Author: Adam Lund
 Maintainer: Adam Lund <adam.lund@math.ku.dk>
 Description: Procedure for solving the maximin problem for identical design across heterogeneous data groups.  Particularly efficient when the design matrix is either orthogonal or has tensor structure. Orthogonal wavelets  can be specified for 1d, 2d or 3d data simply by name. For tensor structured design the tensor components (two or three) may be supplied. The package also provides an efficient implementation of the generic magging estimator.
 Imports: Rcpp (>= 0.12.12), glamlasso
-License: GPL (>= 2)
+License: GPL
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.1.2
